@@ -1,3 +1,6 @@
+.session
+input/
+
 obj/
 bin/
 
