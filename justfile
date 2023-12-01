@@ -2,8 +2,10 @@ set export
 
 year := "2023"
 
+r:
+  dotnet run --project src/Day$(date "+%-d")
 run DAY:
-  dotnet run --project src/Day{{DAY}} --no-build
+  dotnet run --project src/Day{{DAY}}
 
 create DAY:
   # create the project
@@ -11,7 +13,8 @@ create DAY:
   # add the global library as a dependency
   dotnet add src/Day{{DAY}} reference src/Library
   # add project to top level solution
-  dotnet sln add src/App/App.fsproj
+  dotnet sln add src/Day{{DAY}}
+  just load {{DAY}}
 
 load DAY:
   mkdir -p input/$DAY

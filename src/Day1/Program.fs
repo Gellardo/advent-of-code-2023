@@ -1,24 +1,21 @@
 ﻿open Library
 
-let input = AoC.input 1
+let real_input = AoC.input 1
 
-let parseNumbers (s: string) =
-    s.Split("\n")
-    |> Array.choose (fun x ->
-        match System.Int32.TryParse x with
-        | (true, n) -> Some n
-        | _ -> None)
+let extractNumber (s: string) =
+    let numbers = Util.chars s |> Array.choose Util.parseInt
 
-let elves = input.Split("\n\n") |> Array.map parseNumbers
-printfn "%A" elves[..2]
+    numbers[0] * 10 + numbers[numbers.Length - 1]
 
-printfn "top elf: %d" (elves |> Array.map Array.sum |> Array.max)
 
-printfn
-    "top 3 elves: %d"
-    (elves
-     |> Array.map Array.sum
-     |> Array.sort
-     |> Array.rev
-     |> Array.take 3
-     |> Array.sum)
+
+
+let part1 (input: string) =
+    input.Split("\n", System.StringSplitOptions.RemoveEmptyEntries)
+    |> Array.map extractNumber
+    |> Array.sum
+
+printfn "part1: %d" (part1 real_input)
+
+let part2 (input: string) = 0
+printfn "part2: %d" (part2 real_input)
