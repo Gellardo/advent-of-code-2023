@@ -17,17 +17,24 @@ let part1 (input: string) =
 
 printfn "part1: %d" (part1 real_input)
 
+let massReplace replacements s =
+    replacements
+    |> Array.fold (fun (acc: string) (oldS: string, newS: string) -> acc.Replace(oldS, oldS + newS + oldS)) s
+
+
 let part2 (input: string) =
     input.Split("\n", System.StringSplitOptions.RemoveEmptyEntries)
-    |> Array.map (fun s -> s.Replace("one", "one1one"))
-    |> Array.map (fun s -> s.Replace("two", "two2two"))
-    |> Array.map (fun s -> s.Replace("three", "three3three"))
-    |> Array.map (fun s -> s.Replace("four", "four4four"))
-    |> Array.map (fun s -> s.Replace("five", "five5five"))
-    |> Array.map (fun s -> s.Replace("six", "six6six"))
-    |> Array.map (fun s -> s.Replace("seven", "seven7seven"))
-    |> Array.map (fun s -> s.Replace("eight", "eight8eight"))
-    |> Array.map (fun s -> s.Replace("nine", "nine9nine"))
+    |> Array.map (
+        massReplace [| ("one", "1")
+                       ("two", "2")
+                       ("three", "3")
+                       ("four", "4")
+                       ("five", "5")
+                       ("six", "6")
+                       ("seven", "7")
+                       ("eight", "8")
+                       ("nine", "9") |]
+    )
     |> Array.map extractNumber
     // |> Array.map (fun s ->
     // printfn "%d" s
