@@ -41,8 +41,8 @@ printfn "test lines: %A" (processLines "game 1: 1 red, 1 green;2 blue, 3 white")
 
 type Game = int * array<Map<string, int>>
 
-let checkLimits (game: Game) =
-    snd game
+let checkLimits ((id, turns): Game) =
+    turns
     |> Array.forall (fun turn ->
         turn
         |> Map.filter (fun color value -> limits[color] < value)
@@ -55,31 +55,30 @@ printfn
 
 let part1 (input: string) =
     input.Split("\n", System.StringSplitOptions.RemoveEmptyEntries)
-    |> Array.map processLines
-    |> Array.filter checkLimits
-    |> Array.map fst
-    |> Array.sum
+    |> Seq.map processLines
+    |> Seq.filter checkLimits
+    |> Seq.map fst
+    |> Seq.sum
 
 printfn "part1 test: 5+3 = 8 == %d" (part1 test_input)
 printfn "part1: %d" (part1 real_input)
 
 let power (game: Game) =
     snd game
-    |> Array.fold
+    |> Seq.fold
         (fun (acc: Map<string, int>) turn ->
             acc
             |> Map.map (fun k v -> max (Map.tryFind k turn |> Option.defaultValue 0) v))
         empty_turn
     |> fun m -> m.Values
-    |> Seq.toArray
-    |> Array.reduce (fun acc v -> acc * v)
+    |> Seq.reduce (*)
 
 
 let part2 (input: string) =
     input.Split("\n", System.StringSplitOptions.RemoveEmptyEntries)
-    |> Array.map processLines
-    |> Array.map power
-    |> Array.sum
+    |> Seq.map processLines
+    |> Seq.map power
+    |> Seq.sum
 
 printfn "part2 test: 2286 = %d" (part2 test_input)
 
