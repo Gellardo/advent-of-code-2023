@@ -9,6 +9,8 @@ Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 """
 
+let empty_turn = Map [ "red", 0; "green", 0; "blue", 0 ]
+
 let limits =
     Map [ "red", 12
           "green", 13
@@ -61,7 +63,16 @@ let part1 (input: string) =
 printfn "part1 test: 5+3 = 8 == %d" (part1 test_input)
 printfn "part1: %d" (part1 real_input)
 
-let power (game: Game) = 0
+let power (game: Game) =
+    snd game
+    |> Array.fold
+        (fun (acc: Map<string, int>) turn ->
+            acc
+            |> Map.map (fun k v -> max (Map.tryFind k turn |> Option.defaultValue 0) v))
+        empty_turn
+    |> fun m -> m.Values
+    |> Seq.toArray
+    |> Array.reduce (fun acc v -> acc * v)
 
 
 let part2 (input: string) =
