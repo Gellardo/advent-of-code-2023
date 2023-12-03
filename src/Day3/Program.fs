@@ -69,7 +69,7 @@ let neighbors (start: Point) length =
         seq {
             let { line = line; col = col } = start
 
-            for i in col - 1 .. col + length + 1 do
+            for i in col - 1 .. col + length do
                 for j in line - 1 .. line + 1 do
                     yield { line = j; col = i }
         }
@@ -78,7 +78,10 @@ let neighbors (start: Point) length =
 let partNumbers (numbers: seq<Number>) symbols =
     numbers
     |> Seq.filter (fun number ->
-        Set.intersect (neighbors (number.start) (number.length)) symbols
+        Set.intersect (neighbors number.start number.length) symbols
+        // |> Set.map (fun set ->
+        // printfn "%A %A" number set
+        // set)
         |> Set.isEmpty
         |> (not))
 
@@ -92,7 +95,7 @@ printfn "part1: %d" (part1 real_lines)
 
 let part2 (input: string) = 0
 
-printfn "part2 test: YY = %d" (part2 test_input)
+printfn "part2 test: 467835 = %d" (part2 test_input)
 
 
 printfn "part2: %d" (part2 real_input)
