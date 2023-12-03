@@ -8,7 +8,7 @@ module AoC =
             use streamreader = new StreamReader(sprintf "input/%d/input.txt" day)
             streamreader.ReadToEnd()
         with
-        | :? FileNotFoundException as ex -> failwith $"File not found: {ex.Message}"
+        | :? FileNotFoundException as ex -> failwith $"File for day {day} not found: {ex.Message}"
         | :? IOException as ex -> failwith $"An IO error occurred: {ex.Message}"
 
 module Util =
