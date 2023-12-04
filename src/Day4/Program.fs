@@ -30,20 +30,36 @@ let parseLine (line: string) =
 
     numbers[0], numbers[1]
 
+let overlapSize =
+    parseLine
+    >> fun (winning, chosen) -> Set.intersect winning chosen
+    >> fun (overlap) -> overlap.Count
+
 let part1 (input: array<string>) =
     input
-    |> Seq.map parseLine
-    |> Seq.map (fun (winning, chosen) -> Set.intersect winning chosen)
-    |> Seq.map (fun overlap -> (pown 2 overlap.Count) / 2)
+    |> Seq.map overlapSize
+    |> Seq.map (fun overlap -> (pown 2 overlap) / 2)
     |> Seq.sum
 
 printfn "part1 test: 13 == %d" (part1 test_lines)
 printfn "part1: %d" (part1 real_lines)
 
 
-let part2 (input: array<string>) = 0
+let part2 (input: array<string>) =
+    // let counts = Array.create input.Length 1
 
-printfn "part2 test: 467835 = %d" (part2 test_lines)
+    input
+    |> Seq.mapi (fun i line -> i, overlapSize line)
+    |> Seq.fold
+        (fun (counts: array<int>) (i, overlap) ->
+            for won in 1..overlap do
+                counts[i + won] <- counts[i + won] + counts[i]
+
+            counts)
+        (Array.create input.Length 1)
+    |> Seq.sum
+
+printfn "part2 test: 30 = %d" (part2 test_lines)
 
 
 printfn "part2: %d" (part2 real_lines)
