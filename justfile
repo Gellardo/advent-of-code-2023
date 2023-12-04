@@ -15,6 +15,7 @@ create DAY:
   # add project to top level solution
   dotnet sln add src/Day{{DAY}}
   just load {{DAY}}
+  git add src/Day{{DAY}}
 
 load DAY:
   mkdir -p input/$DAY
