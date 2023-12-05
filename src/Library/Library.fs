@@ -21,6 +21,11 @@ module Util =
         | (true, n) -> Some n
         | _ -> None
 
+    let parseInt64 (s: string) =
+        match System.Int64.TryParse(s) with
+        | (true, n) -> Some n
+        | _ -> None
+
 
 module Say =
     let hello name = sprintf "Hello %s" name
