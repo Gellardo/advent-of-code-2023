@@ -59,25 +59,29 @@ let parseMap (s: string) =
     s.Split("\n", System.StringSplitOptions.RemoveEmptyEntries)
     |> Array.removeAt 0
     |> Array.map (fun l ->
-        printfn "line %A" l
-
         l.Split(" ", System.StringSplitOptions.RemoveEmptyEntries)
         |> Array.choose Util.parseInt64)
     |> Array.map (fun l ->
-        printfn "mapping %A" l
-
         { source = l[1]
           destination = l[0]
           length = l[2] })
 
-let mapSeeds (seeds: array<int64>) (mapping: Mapping) =
-    seeds |> Array.map (fun seed ->
-        match mapping with
-        | {source, destination, length} where seed = source + i and i < length -> destination+i
-        | default -> seed
-    )
+let mapSeeds (mappings: array<Mapping>) (seed: int64) =
+    let mappedSeed =
+        mappings
+        |> Array.choose (fun mapping ->
+            match mapping with
+            | { source = source
+                destination = destination
+                length = length } when 0L <= seed - source && seed - source < length ->
+                Some(destination + seed - source)
+            | _ -> None)
 
-    seeds
+    match mappedSeed with
+    | [| result |] -> result
+    | [||] -> seed
+    | _ -> failwith ("multiple mapping options")
+
 let doMapping (seedString: string) (mapStrings: list<string>) =
     let seeds =
         seedString.Split(" ", System.StringSplitOptions.RemoveEmptyEntries)
@@ -85,7 +89,8 @@ let doMapping (seedString: string) (mapStrings: list<string>) =
 
     let maps = mapStrings |> Seq.map parseMap
 
-    maps |> Seq.fold (fun seeds map -> seeds) seeds
+    maps
+    |> Seq.fold (fun seeds map -> seeds |> Array.map (mapSeeds map)) seeds
 
 let part1 (input: array<string>) =
     match (List.ofArray input) with
