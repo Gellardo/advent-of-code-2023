@@ -14,6 +14,7 @@ create DAY:
   dotnet add src/Day{{DAY}} reference src/Library
   # add project to top level solution
   dotnet sln add src/Day{{DAY}}
+  TESTINPUT=$(pbpaste) perl -pe 's/DAY/{{DAY}}/; s/TESTINPUT/$ENV{"TESTINPUT"}/' template.fs >src/Day{{DAY}}/Program.fs
   just load {{DAY}}
   git add src/Day{{DAY}}
 
