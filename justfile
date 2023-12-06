@@ -16,7 +16,7 @@ create DAY:
   dotnet sln add src/Day{{DAY}}
   TESTINPUT=$(pbpaste) perl -pe 's/DAY/{{DAY}}/; s/TESTINPUT/$ENV{"TESTINPUT"}/' template.fs >src/Day{{DAY}}/Program.fs
   just load {{DAY}}
-  git add src/Day{{DAY}}
+  git add src/Day{{DAY}} AoCSolution.sln
 
 load DAY:
   mkdir -p input/$DAY
