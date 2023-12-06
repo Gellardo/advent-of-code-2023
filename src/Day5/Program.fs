@@ -106,89 +106,51 @@ let mapSeedRanges (mappings: array<Mapping>) (seedRanges: seq<int64 * int64>) : 
     let rec m ((seedStart, seedLen): int64 * int64) (mappings: list<Mapping>) () : seq<int64 * int64> =
         seq {
             match mappings with
-            | _ when seedLen <= 0 -> ()
-            | [] -> yield (seedStart, seedLen)
-            //  AAA     |     AAA
-            //       BB | BBB
-            | mapping :: rest when
-                seedStart + seedLen <= mapping.source
-                || mapping.source + mapping.length <= seedStart
-                ->
-                printfn "no overlap"
-                yield! (m (seedStart, seedLen) rest) ()
-            //  AAA
-            //   B
-            | mapping :: rest when
-                seedStart >= mapping.source
-                && seedStart + seedLen
-                   <= mapping.source + mapping.length
-                ->
-                printfn "full overlap"
-                let offset = seedStart - mapping.source
-                yield mapping.destination + offset, seedLen
-            //  AAA
-            //   BBB
-            | mapping :: rest when
-                seedStart >= mapping.source
-                && seedStart < mapping.source + mapping.length
-                ->
-                printfn "right partial overlap"
-                let offset = seedStart - mapping.source
-                let overlap = mapping.length - offset
-                yield mapping.destination + offset, overlap
-                yield! (m (mapping.source + mapping.length, seedLen - overlap) rest) ()
-            //  AAA
-            // BBB
-            | mapping :: rest when
-                seedStart < mapping.source
-                && seedStart + seedLen >= mapping.source
-                ->
-                printfn "left partial overlap"
-                let overlap = seedLen - (mapping.source - seedStart)
-                yield! (m (seedStart, seedLen - overlap) rest) ()
-                yield mapping.destination, overlap
-            //  A
-            // BBB
-            | mapping :: rest when
-                seedStart < mapping.source
-                && seedStart + seedLen
-                   >= mapping.source + mapping.length
-                ->
-                printfn "middle overlap"
-                let offset = mapping.source - seedStart
-                yield! (m (seedStart, offset) rest) ()
-                yield mapping.destination, mapping.length
-                yield! (m (mapping.source + mapping.length, seedLen - offset - mapping.length) rest) ()
+            | _ when seedLen <= 0 ->
+                // printfn "-"
+                ()
+            | [] ->
+                // printfn "- %A" (seedStart, seedLen)
+                yield (seedStart, seedLen)
+            | mapping :: rest ->
+                let seedEndExclusive = seedStart + seedLen
+                let mappingEndExclusive = mapping.source + mapping.length
+                let startIntersection = min seedEndExclusive (max seedStart mapping.source)
+
+                let endIntersectionExclusive =
+                    min seedEndExclusive (max seedStart mappingEndExclusive)
+
+                yield! (m (seedStart, startIntersection - seedStart) rest) ()
+
+                if startIntersection >= mapping.source
+                   && startIntersection < mapping.source + mapping.length
+                   && startIntersection < endIntersectionExclusive then
+                    let mappedRange =
+                        (mapping.destination
+                         + (startIntersection - mapping.source),
+                         endIntersectionExclusive - startIntersection)
+
+                    // printfn "  %A" mappedRange
+                    yield mappedRange
+
+                yield! (m (endIntersectionExclusive, seedEndExclusive - endIntersectionExclusive) rest) ()
             | _ -> failwith ("forgot something it seems")
         }
 
     seq {
         for range in seedRanges do
-            printfn "Mapping %A" range
             yield! (m range (List.ofArray mappings)) ()
     }
 
-// match remaining with
-// | current :: rest ->
-//     for map in mappings do
-//         for range in remaining do
-//             mapped = range :: mapped
-
-//     List.append remaining
-
-//     seedRanges
-// mappings
-// |> Array.choose (fun mapping ->
-//     match mapping with
-//     | { source = source
-//         destination = destination
-//         length = length } when 0L <= seed - source && seed - source < length -> Some(destination + seed - source)
-//     | _ -> None)
-
-// match mappedSeed with
-// | [| result |] -> seedRanges
-// | [||] -> seedRanges
-// | _ -> failwith ("multiple mapping options")
+for r in [| 1L, 9L; 1, 2; 1, 3; 6, 3; 10, 5 |] do
+    printfn
+        "mapping %A to %A"
+        r
+        (mapSeedRanges
+            ([| { source = 3
+                  destination = 13
+                  length = 5 } |])
+            (Seq.ofArray [| (fst r), snd r |]))
 
 let alternativeDoMapping (seedString: string) (mapStrings: list<string>) =
     let seedsSpec =
@@ -207,11 +169,7 @@ let alternativeDoMapping (seedString: string) (mapStrings: list<string>) =
     let maps = mapStrings |> Seq.map parseMap
 
     maps
-    |> Seq.fold
-        (fun (ranges: seq<int64 * int64>) mapping ->
-            printfn "Start mapping"
-            mapSeedRanges mapping ranges)
-        seeds
+    |> Seq.fold (fun (ranges: seq<int64 * int64>) mapping -> mapSeedRanges mapping ranges) seeds
 
 let part2 (input: array<string>) =
     match (List.ofArray input) with
@@ -221,4 +179,4 @@ let part2 (input: array<string>) =
     |> Seq.min
 
 printfn "part2 test: 46 = %d" (part2 test_lines)
-// printfn "part2: %d" (part2 real_lines)
+printfn "part2: %d" (part2 real_lines)
