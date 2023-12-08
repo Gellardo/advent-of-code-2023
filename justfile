@@ -18,6 +18,10 @@ create DAY:
   just load {{DAY}}
   git add src/Day{{DAY}} AoCSolution.sln
 
+code DAY:
+  just create {{DAY}}
+  code src/Day{{DAY}}/Program.fs input/{{DAY}}/input.txt
+
 load DAY:
   mkdir -p input/$DAY
   curl -sf "https://adventofcode.com/$year/day/$DAY/input" -H "Cookie: session=$(cat .session)" -o input/$DAY/input.txt
