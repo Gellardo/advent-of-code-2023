@@ -26,7 +26,9 @@ let parseRules (rules: string) =
         ||| System.StringSplitOptions.TrimEntries
     )
     |> Array.map (fun line ->
-        let matches = Regex.Matches(line, "([A-Z]{3}) = \(([A-Z]{3}), ([A-Z]{3})\)")
+        let matches =
+            Regex.Matches(line, "([A-Z0-9]{3}) = \(([A-Z0-9]{3}), ([A-Z0-9]{3})\)")
+
         let from = matches[0].Groups[1]
         let left = matches[0].Groups[2]
         let right = matches[0].Groups[3]
@@ -47,7 +49,6 @@ let splitLines (input: string) =
 
 
 let real_lines = splitLines real_input
-printfn "%A" real_lines
 let test_lines = splitLines test_input
 
 let parseLine s = 1
@@ -85,6 +86,8 @@ let part2 (pattern, rules: Map<string, (string * string)>) =
             |> Seq.filter (fun state -> state.EndsWith "A")
             |> Seq.toList
 
+        printfn "%d starting states: %A" states.Length states
+
         let mutable steps: int = 0
 
         for instruction in pattern do
@@ -102,13 +105,23 @@ let part2 (pattern, rules: Map<string, (string * string)>) =
             if states
                |> List.forall (fun state -> state.EndsWith "Z") then
                 yield steps
+
+            let currentZs =
+                states
+                |> List.map (fun state -> if state.EndsWith "Z" then 1 else 0)
+                |> Seq.sum
+
+            // if currentZs > 0 then
+            // printfn "%d - current Zs: %d" steps currentZs
+
+            if steps % 100000 = 0 then
+                printfn "took %d steps" steps
     }
     |> Seq.head
 
 let test_lines_new =
     splitLines
-        """
-LR
+        """LR
 
 11A = (11B, XXX)
 11B = (XXX, 11Z)
