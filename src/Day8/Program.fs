@@ -11,12 +11,12 @@ BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)
 """
 
-let toSeq (pattern: string) =
+let toIndexedSeq (pattern: string) =
     seq {
         let instructions = Util.chars pattern
 
         while true do
-            yield! instructions
+            yield! (Seq.zip { 1 .. instructions.Length } instructions)
     }
 
 let parseRules (rules: string) =
@@ -44,7 +44,7 @@ let splitLines (input: string) =
                 ||| System.StringSplitOptions.TrimEntries
             )
         with
-    | [| pattern: string; rules: string |] -> ((toSeq pattern), (parseRules rules))
+    | [| pattern: string; rules: string |] -> (pattern, (parseRules rules))
     | a -> failwith (sprintf "could not parse lines: %A" a)
 
 
@@ -58,12 +58,12 @@ let part1 (pattern, rules: Map<string, (string * string)>) =
         let mutable state: string = "AAA"
         let mutable steps: int = 0
 
-        for instruction in pattern do
+        for instruction in toIndexedSeq pattern do
             // printfn "%s %s %A" state instruction rules
             state <-
                 match instruction with
-                | "L" -> fst rules[state]
-                | "R" -> snd rules[state]
+                | _, "L" -> fst rules[state]
+                | _, "R" -> snd rules[state]
                 | _ -> failwith "unknown pattern"
 
             steps <- steps + 1
@@ -78,46 +78,67 @@ let part1 (pattern, rules: Map<string, (string * string)>) =
 printfn "part1 test: 6 == %d" (part1 test_lines)
 printfn "part1: %d" (part1 real_lines)
 
-let part2 (pattern, rules: Map<string, (string * string)>) =
-    // input |> Array.map parseLine |> Array.sum
-    seq {
-        let mutable states: list<string> =
-            rules.Keys
-            |> Seq.filter (fun state -> state.EndsWith "A")
-            |> Seq.toList
+let part2 ((pattern: string), rules: Map<string, (string * string)>) =
+    let startStates: list<string> =
+        rules.Keys
+        |> Seq.filter (fun state -> state.EndsWith "A")
+        |> Seq.toList
 
-        printfn "%d starting states: %A" states.Length states
+    printfn "%d starting states: %A" startStates.Length startStates
+    printfn "pattern length: %d" pattern.Length
 
-        let mutable steps: int = 0
+    // Since it takes longer than reasonable it means I have to find some math property
+    // This implies that there cycles that the startstates run through until they all align far in the future
+    // (left it to run for 2.5m -> 132900000 steps)
+    let findLoop (startState) =
+        let mutable state = startState
+        let mutable seen = Map.empty
+        let mutable steps = 0
 
-        for instruction in pattern do
-            // printfn "%s %s %A" state instruction rules
-            states <-
-                states
-                |> List.map (fun state ->
+        seq {
+            for (pos, instruction) in toIndexedSeq pattern do
+                // printfn "%s %s %A" state instruction rules
+                state <-
                     match instruction with
                     | "L" -> fst rules[state]
                     | "R" -> snd rules[state]
-                    | _ -> failwith "unknown pattern")
+                    | _ -> failwith "unknown pattern"
 
-            steps <- steps + 1
+                steps <- steps + 1
 
-            if states
-               |> List.forall (fun state -> state.EndsWith "Z") then
-                yield steps
+                if state.EndsWith "Z" then
+                    if not (seen.ContainsKey(pos, state)) then
+                        seen <- seen.Add((pos, state), steps)
+                    else
+                        yield steps, state, seen
+        }
+        |> Seq.head
 
-            let currentZs =
-                states
-                |> List.map (fun state -> if state.EndsWith "Z" then 1 else 0)
-                |> Seq.sum
+    // from looking at the result, each start state only reaches one endstate and then loops
+    // therefore: metaknowlege: seen only contains 1 element, all of them reached on the same step in the pattern
+    startStates
+    |> Seq.map (fun state ->
+        let (endCycleSteps, endState, seen) = (findLoop state)
+        let startCycleSteps = Seq.head seen.Values
+        let cycleSteps = (endCycleSteps - startCycleSteps)
 
-            // if currentZs > 0 then
-            // printfn "%d - current Zs: %d" steps currentZs
+        printfn
+            "%s->%s: first occurence %d steps = %d cycles, second occurence %d steps = %d cycles"
+            state
+            endState
+            startCycleSteps
+            (startCycleSteps / pattern.Length)
+            cycleSteps
+            (cycleSteps / pattern.Length)
 
-            if steps % 100000 = 0 then
-                printfn "took %d steps" steps
-    }
-    |> Seq.head
+        // more meta knowledge: it seems to be full cycles, so endstate is reached
+        // - after pattern is fully consumed
+        // - starts over because the second cycle is exactly as long as the first
+        // Also cycle-length/patternlength are prime numbers, so the first time they intersect is the product of that
+        // yeahy, I don't need to implement gcd/gcm for all the numbers as well
+        int64 (cycleSteps / pattern.Length))
+    |> Seq.reduce (*)
+    |> fun patterncycles -> patterncycles * (int64 pattern.Length)
 
 let test_lines_new =
     splitLines
@@ -134,4 +155,5 @@ XXX = (XXX, XXX)
 """
 
 printfn "part2 test: 6 = %d" (part2 test_lines)
+// based on the number of steps I waited, I might have gotten the correct answer after 140 days of waiting 🤯
 printfn "part2: %d" (part2 real_lines)
